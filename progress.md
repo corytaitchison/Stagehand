@@ -62,13 +62,40 @@ ImportError: dlopen(/Users/cory/opt/anaconda3/envs/stagehand/lib/python3.9/site-
 ```
 - Seems like it expects and intel version, maybe one of the packages wasn't installed correctly?
 
-## Note 3
+### Note 3
 
 I think I got it working - had to reinstall OBS using the Intel version rather than the M1 version I got from Reddit...
 
-## Note 4
+### Note 4
 
 When taking the webcame, need to convert the OpenCV `BRG` to regular `RGB`. 
 ```python
 frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 ```
+
+## 2021-11-29 10pm
+
+Face detection, using OpenCV: https://towardsdatascience.com/face-detection-in-2-minutes-using-opencv-python-90f89d7c0f81 
+
+- It works
+- Is quite laggy when doing the calculation, would need to optimise, e.g. only calculate once very second
+	- Fix this by adjusting the scaling factor when doing the computation
+- Need to ensure that the dimensions of the cropped image align with the virtual camera
+	- Use `cv.resize()` 
+
+### Note 1
+
+There is occassionally an error when using the virtual camera, where it exits:
+```
+Traceback (most recent call last):
+  File "/Users/cory/Documents/Stagehand/test.py", line 84, in <module>
+    frame_rgb = cv.resize(cv.cvtColor(frame_crop, cv.COLOR_BGR2RGB), (WIDTH, HEIGHT))
+cv2.error: OpenCV(4.5.4) /Users/runner/work/opencv-python/opencv-python/opencv/modules/imgproc/src/color.cpp:182: error: (-215:Assertion failed) !_src.empty() in function 'cvtColor'
+```
+
+- Might mean that the `frame_crop` is empty? 
+
+## 2021-11-30 12am
+
+Smoothing out the cropping motion using Kalman Filters. 
+- https://stackoverflow.com/questions/42904509/opencv-kalman-filter-python 
