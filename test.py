@@ -1,6 +1,7 @@
 import pyvirtualcam
 import numpy as np
 import cv2 as cv
+from spring import Spring
 
 # Classify face very X frames
 CLASSEVERY = 2
@@ -9,7 +10,9 @@ DISPLAY = 1
 # Camera width
 WIDTH, HEIGHT = 1920, 1080
 # Crop Ratio
-CROP = 1.5
+CROP = 1.2
+# Vertical offset
+VOFFSET = 60
 
 #################
 
@@ -28,6 +31,9 @@ face = [0, 0, 0, 0]
 # Calculate cropped dimensions
 c_width = int(round(0.5 * WIDTH / CROP)) * 2
 c_height = int(round(0.5 * HEIGHT / CROP)) * 2
+
+# Initialise spring
+sp = None
 
 with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
     print(f'Using virtual camera: {cam.device}')
@@ -59,8 +65,19 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
 
                 # Convert to the desired crop ratio
                 (x, y, w, h) = face
-                centre = [int(round(x + w / 2)), int(round(y + h / 2))]
-                face = [centre[0] - c_width//2, centre[1] - c_height//2, c_width, c_height]
+                centre = np.array([int(round(x + w / 2)), int(round(y + h / 2))])
+
+        # Get the smoothed position
+        if sp is None:
+            sp = Spring(np.float64(centre))
+        else:
+            # Update the position and recompute the ODE
+            sp.set_spring(np.float64(centre))
+            sp.update()
+            centre = sp.get_x()
+
+            # Recalculate cropped boundaries
+            face = [min(max(centre[0] - c_width//2, 0), WIDTH - c_width), min(max(centre[1] - c_height//2 - VOFFSET, 0), HEIGHT - c_height), c_width, c_height]
 
         # # Draw the rectangle around each face
         # (x, y, w, h) = face

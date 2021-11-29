@@ -99,3 +99,14 @@ cv2.error: OpenCV(4.5.4) /Users/runner/work/opencv-python/opencv-python/opencv/m
 
 Smoothing out the cropping motion using Kalman Filters. 
 - https://stackoverflow.com/questions/42904509/opencv-kalman-filter-python 
+
+### Note 1
+
+- That seems too complicated, instead I just used a damped spring motion with simple update equations to make it smooth
+- Each new frame sets the position of the spring origin, which affects the force
+- Seems to work well!
+
+### To Do
+
+1. Comment code 
+2. Implement arguments for the python file (e.g. to adjust spring constant or crop factor)
