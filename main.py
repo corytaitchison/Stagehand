@@ -47,8 +47,9 @@ face = [0, 0, 0, 0]
 c_width = int(round(0.5 * WIDTH / args.crop)) * 2
 c_height = int(round(0.5 * HEIGHT / args.crop)) * 2
 
-# Initialise spring
-sp = None
+# Initialise spring to be at the centre of the screen
+centre = np.array([WIDTH / 2, HEIGHT / 2])
+sp = Spring(np.float64(centre))
 
 ##############
 # FRAME LOOP #
@@ -86,13 +87,9 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
                 (x, y, w, h) = face
                 centre = np.array([int(round(x + w / 2)), int(round(y + h / 2))])
 
-        # Update the spring position
-        if sp is None:
-            sp = Spring(np.float64(centre))
-        else:
-            # Update the position and recompute the ODE
-            sp.set_spring(np.float64(centre))
-            sp.update()
+        # Update the spring position and recompute the ODE
+        sp.set_spring(np.float64(centre))
+        sp.update()
 
         # Get the smoothed position
         centre = sp.get_x()

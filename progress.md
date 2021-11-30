@@ -114,4 +114,4 @@ Smoothing out the cropping motion using Kalman Filters.
 ## 2021-11-30 9am
 
 - Commented the `spring.py` class 
-- Implemented arguments to the main function https://docs.python.org/3/library/argparse.html#name-or-flags 
+- Implemented arguments to the main function https://docs.python.org/3/library/argparse.html#name-or-flags  
