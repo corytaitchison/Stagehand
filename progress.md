@@ -110,3 +110,8 @@ Smoothing out the cropping motion using Kalman Filters.
 
 1. Comment code 
 2. Implement arguments for the python file (e.g. to adjust spring constant or crop factor)
+
+## 2021-11-30 9am
+
+- Commented the `spring.py` class 
+- Implemented arguments to the main function https://docs.python.org/3/library/argparse.html#name-or-flags 

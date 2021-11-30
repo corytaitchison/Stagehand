@@ -1,42 +1,61 @@
+import argparse
 import pyvirtualcam
+from spring import Spring
 import numpy as np
 import cv2 as cv
-from spring import Spring
+
+#############
+# CONSTANTS #
+#############
 
 # Classify face very X frames
 CLASSEVERY = 2
-# Send to virtual camera (1) or display using CV (0) 
-DISPLAY = 1
 # Camera width
 WIDTH, HEIGHT = 1920, 1080
-# Crop Ratio
-CROP = 1.2
 # Vertical offset
 VOFFSET = 60
 
-#################
+#############
+# ARGUMENTS #
+#############
+
+parser = argparse.ArgumentParser(
+    description = "Runs the Stagehand program to track facial position and crop the webcam.")
+parser.add_argument("--crop", type = float, default = 1.2, help = "Crop ratio (default: 1.2)")
+parser.add_argument("--display", choices = ["virtual", "cv"], default = "virtual", \
+    help = "Output type (default: 'virtual')")
+parser.add_argument("-d", "--debug", action = "store_true", help = "Enable debugging ouput (default: false)")
+args = parser.parse_args()
+
+##############
+# INITIALISE #
+##############
 
 # Set up webcam capture
 vc = cv.VideoCapture(1)
 
-# Load the cascade
+# Load the cascade for face detection 
 face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-# Counter
+# Counter for each frame loop
 count = CLASSEVERY - 1
 
 # Initialise face variable
 face = [0, 0, 0, 0]
 
 # Calculate cropped dimensions
-c_width = int(round(0.5 * WIDTH / CROP)) * 2
-c_height = int(round(0.5 * HEIGHT / CROP)) * 2
+c_width = int(round(0.5 * WIDTH / args.crop)) * 2
+c_height = int(round(0.5 * HEIGHT / args.crop)) * 2
 
 # Initialise spring
 sp = None
 
+##############
+# FRAME LOOP #
+##############
+
 with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
-    print(f'Using virtual camera: {cam.device}')
+    if args.debug: print(f'Using virtual camera: {cam.device}')
     while True:
         # Read frame from webcam
         ret, frame = vc.read()
@@ -67,23 +86,27 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
                 (x, y, w, h) = face
                 centre = np.array([int(round(x + w / 2)), int(round(y + h / 2))])
 
-        # Get the smoothed position
+        # Update the spring position
         if sp is None:
             sp = Spring(np.float64(centre))
         else:
             # Update the position and recompute the ODE
             sp.set_spring(np.float64(centre))
             sp.update()
-            centre = sp.get_x()
 
-            # Recalculate cropped boundaries
-            face = [min(max(centre[0] - c_width//2, 0), WIDTH - c_width), min(max(centre[1] - c_height//2 - VOFFSET, 0), HEIGHT - c_height), c_width, c_height]
+        # Get the smoothed position
+        centre = sp.get_x()
 
-        # # Draw the rectangle around each face
-        # (x, y, w, h) = face
-        # cv.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+        # Recalculate cropped boundaries, ensuring it doesn't exceed the edges of the video 
+        #   face = [x, y, w, h]
+        face = [\
+            min(max(centre[0] - c_width//2, 0), WIDTH - c_width), \
+            min(max(centre[1] - c_height//2 - VOFFSET, 0), HEIGHT - c_height), \
+            c_width, \
+            c_height\
+        ]
 
-        # Crop to face
+        # Crop to face if a face is detected 
         (x, y, w, h) = face
         if w == 0:
             frame_crop = frame 
@@ -91,7 +114,7 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
             frame_crop = frame[y:(y+h), x:(x+w)]
 
         # Send to display 
-        if DISPLAY == 1:
+        if args.display == "virtual":
             # Use the virtual camera
 
             # Convert into RGB since OpenCV uses BRG 
@@ -110,4 +133,5 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
             if k == 27:
                 break
 
+# Release webcam 
 vc.release()
