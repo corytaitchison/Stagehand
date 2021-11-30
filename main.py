@@ -9,7 +9,7 @@ import cv2 as cv
 #############
 
 # Classify face very X frames
-CLASSEVERY = 2
+CLASSEVERY = 5
 # Camera width
 WIDTH, HEIGHT = 1920, 1080
 # Vertical offset
@@ -25,6 +25,8 @@ parser.add_argument("--crop", type = float, default = 1.2, help = "Crop ratio (d
 parser.add_argument("--display", choices = ["virtual", "cv"], default = "virtual", \
     help = "Output type (default: 'virtual')")
 parser.add_argument("-d", "--debug", action = "store_true", help = "Enable debugging ouput (default: false)")
+parser.add_argument("--k", type = float, default = 0.5, help = "Spring constant (default: 0.5)")
+parser.add_argument("--gamma", type = float, default = 1, help = "Damping coefficient (default: 1.0)")
 args = parser.parse_args()
 
 ##############
@@ -49,7 +51,10 @@ c_height = int(round(0.5 * HEIGHT / args.crop)) * 2
 
 # Initialise spring to be at the centre of the screen
 centre = np.array([WIDTH / 2, HEIGHT / 2])
-sp = Spring(np.float64(centre))
+sp = Spring(
+    np.float64(centre),
+    k = args.k,
+    gamma = args.gamma)
 
 ##############
 # FRAME LOOP #
@@ -86,9 +91,11 @@ with pyvirtualcam.Camera(width = WIDTH, height = HEIGHT, fps = 30) as cam:
                 # Convert to the desired crop ratio
                 (x, y, w, h) = face
                 centre = np.array([int(round(x + w / 2)), int(round(y + h / 2))])
+            
+                # Update the spring position
+                sp.set_spring(np.float64(centre))
 
-        # Update the spring position and recompute the ODE
-        sp.set_spring(np.float64(centre))
+        # Recompute the ODE
         sp.update()
 
         # Get the smoothed position
