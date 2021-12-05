@@ -41,13 +41,13 @@
 		<div class="row2" id="title-art-gridd">stagehandstagehandstagehandstagehandstagehandstagehandstagehand</div>
 		{#if yToOne(y) == 1}
 			<div id="menuBar" transition:fade>
-				<a href="/#">
+				<a href="https://github.com/corytaitchison/Stagehand">
 					<Icon data={github} scale={2}/>
 				</a>
 				<button on:click={() => alert(1)}>
 					<Icon data={download} scale={2}/>
 				</button>
-				<button on:click={() => alert(1)}>
+				<button on:click={() => alert(2)}>
 					<Icon data={bars} scale={2}/>
 				</button>
 
